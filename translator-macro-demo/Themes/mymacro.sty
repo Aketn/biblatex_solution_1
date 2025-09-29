@@ -1,0 +1,481 @@
+% パッケージの読み込み（LuaTeX対応）
+\usepackage{luatexja-fontspec}
+\usepackage{amsmath}
+% unicode-math already provides the AMS symbol set; loading amssymb together
+% causes duplicate definitions such as \eth when compiling with LuaLaTeX.
+\usepackage{unicode-math}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{luacolor}
+\usepackage{lua-ul}
+\usepackage{tikz}
+\usepackage{tcolorbox}
+\usepackage{tabularray}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{capt-of}
+\usepackage{enumitem}
+\usepackage{mVersion}
+\usepackage{ wasysym }
+\usepackage{needspace}
+\usepackage{marginnote}
+\usepackage{hyperref}
+
+% 2025年9月28日 フォントフォールバック登録をガード付きで定義
+% 目的: UD Digi Kyokasho N に存在しない en-dash (U+2013) などを HaranoAjiGothic で補完
+% 使い方: フォント設定より前に \RegisterUdDigiFallback を呼ぶ (このsty冒頭で自動実行)
+% 再定義/複数回読み込みによる重複登録を避けるために TeX レベルでフラグ管理
+\newif\ifuddigifallbackregistered
+\providecommand*{\RegisterUdDigiFallback}{%
+  \ifuddigifallbackregistered
+  \else
+    % luaotfload.add_fallback は同名登録を複数回行うと冗長になる可能性があるため一度だけ
+    \directlua{luaotfload.add_fallback("uddigifallback", {"HaranoAjiGothic:script=hani;language=dflt"})}%
+    \uddigifallbackregisteredtrue
+  \fi
+}
+% 即時登録 (ユーザ側で個別制御したい場合はここをコメントアウトし，文書プリアンブルで明示的に呼ぶ)
+\RegisterUdDigiFallback
+
+% \textbullet を数式・本文の双方で安全に使用
+\AtBeginDocument{\renewcommand{\textbullet}{\ensuremath{\bullet}}}
+
+% \textgt（ゴシック体）フォールバック定義
+% luatexja 環境では定義済みのことが多いが、未定義の場合は sans-serif を使用
+\providecommand{\textgt}[1]{\textsf{#1}}
+
+% 原著ページ表示用（翻訳本文に原著のページ番号を示す）
+% - \origpage{123} で現在位置の余白に「p.123」を表示
+% - \origpageouter{123} で常に「外側」余白に表示（両面印刷向け）
+% - marginnote は \marginpar より位置が安定し、浮動要素に影響されにくい
+\renewcommand*{\marginfont}{\footnotesize}
+\newcommand{\origpagefmt}[1]{\textsf{\footnotesize p.~#1}}
+\newcommand{\origpage}[1]{\marginnote[\origpagefmt{#1}]{\origpagefmt{#1}}}
+\newcommand{\origpageouter}[1]{%% 常に外側余白へ
+  \begingroup
+    \ifodd\value{page}\reversemarginpar\else\normalmarginpar\fi
+    \marginnote[\origpagefmt{#1}]{\origpagefmt{#1}}%
+  \endgroup
+}
+
+% セクションスタイルの設定
+\newcommand{\sectionseparator}{\noindent\rule{\textwidth}{1pt}}
+
+% 大きな区切り用のTOC書式（点線・ページ番号なし）
+\newcommand{\largepartentry}[2]{%
+  \needspace{3\baselineskip}% TOC内でのスペース確保
+  \vspace{0.5em}% 上に少し余白
+  {\large \textgt{\textbf{#1}}}% タイトルをゴシック体に
+  \vspace{0.3em}% 下に少し余白
+}
+
+% 大きな区切り用（第1章・第一部など）- TOCにページ番号なしで表示
+\newcommand{\addparttotoc}[1]{%
+  % \thispagestyle{empty}% このページのページ番号を非表示
+  \section*{\Huge\bfseries{#1}}% 非常に大きい文字サイズ
+  \addtocontents{toc}{\protect\largepartentry{#1}{}}% 専用書式でTOCに追加
+  \sectionseparator% 区切り線
+  \vspace{1em}% 少し余白を追加
+}
+
+% 通常のセクション用（既存）
+\newcommand{\addsectiontotoc}[1]{%
+  \section*{\Large{#1}}%
+  \addcontentsline{toc}{section}{#1}%
+}
+
+% バージョン管理スタイル
+\newcommand{\versionbox}[1]{%
+  \begin{flushright}%
+    \textbf{\large{#1}}%
+  \end{flushright}%
+}
+
+% 引用環境の拡張
+\newenvironment{myquotation}{%
+  \begin{quotation}%
+    \itshape%
+}{%
+  \end{quotation}%
+}
+
+% 図表環境の拡張
+\newcommand{\insertfigure}[4][h]{%
+  \begin{figure}[#1]%
+    \centering%
+    \includegraphics[width=#2]{#3}%
+    \caption{#4}%
+    \label{fig:#3}%
+  \end{figure}%
+}
+
+% スペーシングマクロ
+\newcommand{\sectionspace}{\vspace{0.5cm}}
+
+
+% ページスタイルの設定
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+
+% フッターの設定
+\renewcommand{\footrulewidth}{0pt}
+\renewcommand{\headrulewidth}{0pt}
+\cfoot{―　\thepage　―}
+
+% plainスタイルの再定義
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \cfoot{―　\thepage　―}
+    \renewcommand{\footrulewidth}{0pt}
+}
+% tcolorboxの環境定義
+\newenvironment{kurowaku}[1]{%
+  \begin{tcolorbox}[fonttitle=\bfseries\sffamily,title={#1}]%
+}{%
+  \end{tcolorbox}%
+}
+
+\newenvironment{kurowakushiro}[1]{%
+  \begin{tcolorbox}[
+    fonttitle=\bfseries\sffamily,
+    title={#1},
+    colback=white
+  ]%
+}{%
+  \end{tcolorbox}%
+}
+
+% 長い線の定義
+\def\ーー{ー\kern-.5\zw ー\kern-.5\zw ー}
+
+% TikZを使った図形コマンド
+\newcommand{\egg}[1]{\raisebox{-3pt}{%
+  \begin{tikzpicture}[x=1pt,y=1pt,line width=1pt]
+    \draw (0,0) ellipse (4.5 and 6);
+    \draw (0,0) node {%
+      \usefont{T1}{phv}{m}{n}%
+      \fontsize{9pt}{0}\selectfont #1\/};
+  \end{tikzpicture}}}
+  
+\newcommand{\eggg}[1]{\raisebox{-3pt}{%
+  \begin{tikzpicture}[x=1pt,y=1pt,line width=1pt]
+    \draw[fill=black!30] (0,0) ellipse (4.5 and 6);
+    \draw (0,0) node {%
+      \usefont{T1}{phv}{m}{n}%
+      \fontsize{9pt}{0}\selectfont #1\/};
+  \end{tikzpicture}}}
+
+% 枠組みパッケージ
+\usepackage{fancybox}
+
+% 枠の設定
+\setlength{\fboxsep}{3pt}
+
+% 穴埋めコマンド
+\newcommand{\anaume}[1]{\setlength{\fboxrule}{1pt}\framebox[40pt][c]{\mbox{\textbf{{#1}}}}\setlength{\fboxrule}{0.4pt}}
+\newcommand{\sanaume}[1]{\framebox[40pt][c]{\mbox{{#1}}}}
+\newcommand{\banaume}[1]{\setlength{\fboxrule}{1pt}\fbox{\mbox{\textbf{{\phantom{a}#1\phantom{a}}}}}\setlength{\fboxrule}{0.4pt}}
+\newcommand{\sbanaume}[1]{\fbox{\mbox{{\phantom{a}#1\phantom{a}}}}}
+\newcommand{\sisuuanaume}[1]{\setlength{\fboxrule}{1pt}\framebox[16pt][c]{\mbox{\textbf{#1}}}\setlength{\fboxrule}{0.4pt}}
+\newcommand{\ssisuuanaume}[1]{\framebox[16pt][c]{\mbox{#1}}}
+\newcommand{\senntakuanaume}[1]{\setlength{\fboxrule}{0.6pt}\doublebox{\mbox{\textbf{\phantom{ア}#1\phantom{ア}}}}\setlength{\fboxrule}{0.4pt}}
+\newcommand{\ssenntakuanaume}[1]{\doublebox{\mbox{\phantom{ア}#1\phantom{ア}}}}
+
+% 挨拶文コマンド
+\newcommand{\挨拶}{\noindent 拝啓　\ifcase\month\or
+  厳寒\or 春寒\or 早春\or 陽春\or 新緑\or 向暑\or 猛暑\or 残暑\or 初秋\or 仲秋\or 晩秋\or 初冬\fi
+  の候、ますますご清栄のこととお慶び申し上げます。}
+
+
+
+% Luaコードを使った自動採番
+\usepackage{luacode}
+\newcounter{anaumecounter}
+
+\begin{luacode*}
+function toZenkaku(n)
+  local zenkaku = {"０","１","２","３","４","５","６","７","８","９"}
+  local s = tostring(n)
+  local result = ""
+  for i = 1, #s do
+    local digit = tonumber(s:sub(i,i))
+    result = result .. zenkaku[digit+1]
+  end
+  return result
+end
+
+-- 解答の蓄積（Lua側テーブルで管理）
+anaume_answers = {}
+
+function anaume_add_answer(n, s)
+  table.insert(anaume_answers, {n = tonumber(n), s = s})
+end
+
+function anaume_print_answers()
+  if #anaume_answers == 0 then return end
+  tex.print("\\clearpage")
+  tex.print("\\section*{解答}")
+  tex.print("\\begin{itemize}")
+  for i=1,#anaume_answers do
+    local a = anaume_answers[i]
+    tex.print("\\item " .. toZenkaku(a.n) .. "\\quad " .. a.s)
+  end
+  tex.print("\\end{itemize}")
+end
+\end{luacode*}
+
+% 自動採番穴埋め（引数付きで解答収集）
+% 使い方:
+%  - \anaumezidou        → 番号付き空欄のみ（従来通り）
+%  - \anaumezidou{答え}  → 番号付き空欄＋文末の解答一覧に収集
+\makeatletter
+
+% 共通の描画
+\newcommand{\anaumezidou@printbox}{%
+  \setlength{\fboxrule}{1pt}%
+  \framebox[40pt][c]{\textbf{\directlua{tex.print(toZenkaku(\theanaumecounter))}}}%
+  \setlength{\fboxrule}{0.4pt}%
+}
+
+% 引数有無で分岐
+\newcommand{\anaumezidou}{\@ifnextchar\bgroup\anaumezidou@with\anaumezidou@noarg}
+
+% 引数なし: 従来通り空欄のみ
+\newcommand{\anaumezidou@noarg}{%
+  \stepcounter{anaumecounter}%
+  \anaumezidou@printbox%
+}
+
+% 引数あり: 空欄を出しつつ解答を収集
+\newcommand{\anaumezidou@with}[1]{%
+  \stepcounter{anaumecounter}%
+  \anaumezidou@printbox%
+  % Lua側に解答を登録（TeX引数をエスケープして渡す）
+  \directlua{anaume_add_answer(\number\value{anaumecounter}, "\luaescapestring{#1}")}%
+}
+
+% 文末に自動で解答一覧を出力
+\newcommand{\anaumezidouPrintAnswers}{\directlua{anaume_print_answers()}}
+\AtEndDocument{\anaumezidouPrintAnswers}
+\makeatother
+  
+% 文字装飾コマンド（2025年4月16日）
+\newcommand{\―}{\scalebox{2}[1]{―}}
+\newcommand{\baikaku}[1]{\scalebox{2}[1]{#1}}
+
+% 参考文献著者ダッシュ調整（2025年9月29日）
+\newcommand*{\BibDashStretchFactor}{6.4}
+\newcommand*{\SetBibDashStretchFactor}[1]{\renewcommand*{\BibDashStretchFactor}{#1}}
+\DeclareRobustCommand{\BibAuthorDash}{%
+  \leavevmode
+  \begingroup
+    \nobreak\hskip\zw
+    \scalebox{\BibDashStretchFactor}[1]{\textemdash}%
+  \endgroup
+}
+\AtBeginDocument{% 
+  \renewcommand*{\bibnamedash}{\BibAuthorDash}%
+}
+
+% jlreqの設定（2025年6月24日）
+\jlreqsetup{quote_beforeafter_space=0.5\baselineskip}
+
+
+% itemize環境の記号設定（フォント問題対応）
+\setlist[itemize,1]{label=\textcolor{black}{\large $\textbullet$\quad}}
+\setlist[itemize,2]{label=\textcolor{black}{\Large $\circ$\quad}}
+\setlist[itemize,3]{label=\textcolor{black}{\footnotesize $\wasylozenge$\quad}}
+
+% 別解: Unicode文字を直接指定
+% \setlist[itemize,1]{label=•}
+% \setlist[itemize,2]{label=◦}
+% \setlist[itemize,3]{label=‣}
+
+% 2025年8月15日
+\def\resettoclevel{%オリジナルのレベル
+\def\toclevel@part{-1}
+\def\toclevel@chapter{0}
+\def\toclevel@section{1}
+\def\toclevel@subsection{2}
+\def\toclevel@subsubsection{3}
+\def\toclevel@paragraph{4}
+\def\toclevel@subparagraph{5}
+}
+
+\def\uptoclevel{%部以下の見出しレベルを1つ大きくする
+\def\toclevel@part{0}
+\def\toclevel@chapter{1}
+\def\toclevel@section{2}
+\def\toclevel@subsection{3}
+\def\toclevel@subsubsection{4}
+\def\toclevel@paragraph{5}
+\def\toclevel@subparagraph{6}
+}
+
+\def\downtoclevel{%章以下の見出しレベルを1つ小さくする
+\def\toclevel@part{-1}
+\def\toclevel@chapter{-1}
+\def\toclevel@section{1}
+\def\toclevel@subsection{2}
+\def\toclevel@subsubsection{3}
+\def\toclevel@paragraph{4}
+\def\toclevel@subparagraph{5}
+}
+
+% ------------------------------------------------------------
+% biblatex カスタマイズ
+%  - 脚注引用 (\footcite 等) では姓のみを表示
+%  - 参考文献リストでは日本語文献を姓→名 (無コンマ)，欧文文献を「姓, 名」に整形
+%  - 判定は langid のみを使用（language フィールドは無視）
+% ------------------------------------------------------------
+\makeatletter
+\AtBeginDocument{% 
+  \@ifpackageloaded{biblatex}{%
+  % andothers/nameandothers を言語別に出し分け
+  \providecommand*{\mkbibandothers}{\bibstring{andothers}}
+  \providecommand*{\mkbibnameandothers}{\bibstring{nameandothers}}
+  \renewcommand*{\mkbibandothers}{\IfBibEntryWestern{\bibstring{andothers}}{ほか}}
+  \renewcommand*{\mkbibnameandothers}{\IfBibEntryWestern{\bibstring{andothers}}{ほか}}
+  \renewbibmacro*{name:andothers}{%
+    \ifboolexpr{%
+      test {\ifnumequal{\value{listcount}}{\value{liststop}}}%
+      and test \ifmorenames
+    }{\andothersdelim\mkbibnameandothers}{}
+  }%
+
+    % Western 言語かどうかを判定するヘルパー (langid のみ参照)
+    \newcommand*{\IfBibEntryWestern}[2]{%
+      \ifboolexpr{
+        test {\iffieldequalstr{langid}{english}}%
+        or test {\iffieldequalstr{langid}{English}}%
+        or test {\iffieldequalstr{langid}{English (英語)}}%
+        or test {\iffieldequalstr{langid}{american}}%
+        or test {\iffieldequalstr{langid}{American}}%
+        or test {\iffieldequalstr{langid}{british}}%
+        or test {\iffieldequalstr{langid}{British}}%
+        or test {\iffieldequalstr{langid}{australian}}%
+        or test {\iffieldequalstr{langid}{Australian}}%
+        or test {\iffieldequalstr{langid}{canadian}}%
+        or test {\iffieldequalstr{langid}{Canadian}}%
+        or test {\iffieldequalstr{langid}{german}}%
+        or test {\iffieldequalstr{langid}{German}}%
+        or test {\iffieldequalstr{langid}{German (ドイツ語)}}%
+        or test {\iffieldequalstr{langid}{french}}%
+        or test {\iffieldequalstr{langid}{French}}%
+        or test {\iffieldequalstr{langid}{italian}}%
+        or test {\iffieldequalstr{langid}{Italian}}%
+        or test {\iffieldequalstr{langid}{spanish}}%
+        or test {\iffieldequalstr{langid}{Spanish}}%
+      }{#1}{#2}%
+    }
+
+    % 脚注引用用: 姓のみを出力 (デフォルトで和文は「名,姓」の逆順を補正)
+    \DeclareNameFormat{familyonly}{%
+      \IfBibEntryWestern{% 
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{
+            \namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{}
+          }%
+      }{% 
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{
+            \namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{}
+          }%
+      }%
+      \usebibmacro{name:andothers}%
+    }
+
+    % 参考文献リスト: 和文=姓→名 (連結)，欧文=姓, 名
+    \DeclareNameFormat{author}{%
+      \IfBibEntryWestern{% 
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{
+            \namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{
+             \revsdnamepunct\namepartgiven}%
+          }%
+      }{% 
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{
+            \namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{
+             \unskip\namepartgiven}%
+          }%
+      }%
+      \usebibmacro{name:andothers}%
+    }
+
+    % 編集者・翻訳者も著者と同様に表示
+    \DeclareNameAlias{editor}{author}%
+    \DeclareNameFormat{translator}{%
+      \IfBibEntryWestern{% Western系言語: 著者と同じ「姓, 名」
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{
+            \namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{
+             \revsdnamepunct\namepartgiven}%
+          }%
+      }{% 非Western系: 姓名を連結
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{
+            \namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{
+             \unskip\namepartgiven}%
+          }%
+      }%
+      \usebibmacro{name:andothers}%
+      \ifboolexpr{% 最後に出力された訳者名か判定
+        test {\ifnumequal{\value{listcount}}{\value{liststop}}}%
+      }{% 日本語系のときのみ接尾辞を付与
+        \IfBibEntryWestern{}{訳}%
+      }{}%
+    }%
+  \DeclareNameAlias{bytranslator}{translator}%
+    % 言語別に訳者表記を切り替え（欧文= "trans. by", 和文=訳のみ）
+    \renewbibmacro*{bytranslator}{%
+      \ifnameundef{translator}%
+        {}%
+        {%
+          \IfBibEntryWestern
+            {\printtext{trans\adddotspace by\space}\printnames[bytranslator]{translator}}%
+            {\printnames[bytranslator]{translator}}%
+        }%
+    }%
+
+    \renewbibmacro*{bytranslator+others}{%
+      \ifnameundef{translator}%
+        {}%
+        {%
+          \IfBibEntryWestern
+            {\printtext{trans\adddotspace by\space}\printnames[bytranslator]{translator}}%
+            {\printnames[bytranslator]{translator}}%
+          \clearname{translator}%
+          \newunit
+        }%
+      \usebibmacro{withothers}%
+    }%
+
+    % 脚注等のラベル名フォーマットを姓のみへ
+    \DeclareNameAlias{labelname}{familyonly}
+    \DeclareNameAlias{label}{familyonly}
+    \DeclareNameAlias{shortauthor}{familyonly}
+    \DeclareNameAlias{shorteditor}{familyonly}
+    \DeclareNameAlias{shorttranslator}{familyonly}
+    \DeclareNameAlias{citeauthor}{familyonly}
+
+  % 姓名区切り: 欧文はコンマ+空白，日本語は削除
+  \DeclareDelimFormat[bib,biblist]{revsdnamepunct}{\IfBibEntryWestern{\addcomma\space}{}}
+  }{}
+}
+\makeatother

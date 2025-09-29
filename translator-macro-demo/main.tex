@@ -1,0 +1,22 @@
+\documentclass[a4paper]{jlreq}
+
+\input{Themes/mymacro.sty}
+
+\usepackage[backend=biber,style=authoryear,sorting=nyt]{biblatex}
+\addbibresource{bib/references.bib}
+
+\title{Translator Showcase for Western vs Japanese Bibliography Entries}
+\author{Demo Build}
+\date{2025-09-29}
+
+\begin{document}
+\maketitle
+
+本デモでは、欧米語文献に対して `trans. by` 表記を出力し、日本語文献では訳者名の末尾に「訳」を付す `biblatex` カスタマイズの挙動を確認する。
+
+\section*{引用例}
+欧米語文献として \textcite{nowak2018} を参照する。また、日本語文献として \textcite{kant2022} を引用する。
+
+\printbibliography
+
+\end{document}

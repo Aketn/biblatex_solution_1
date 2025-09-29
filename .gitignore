@@ -1,0 +1,37 @@
+# LaTeX build outputs
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.synctex(busy)
+*.toc
+*.pdf
+*.nav
+*.snm
+*.vrb
+*.xdv
+*.gz
+*.dvi
+version.dat
+
+# latexmk bookkeeping
+*.fdb_latexmk
+*.synctex
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+*.code-workspace
+*.swp
+*.swo
+~$*
+*.tmp
+
+# Local Tex cache
+texmf-var/
