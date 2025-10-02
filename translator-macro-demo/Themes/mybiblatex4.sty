@@ -1,5 +1,5 @@
-% mybiblatex3.sty -- Authoryear-focused BibLaTeX profile (Japanese/Western mix)
-\ProvidesFile{mybiblatex3.sty}[2025/10/02 Authoryear mixed-language BibLaTeX profile]
+% Mybiblatex4.sty -- Authoryear-focused BibLaTeX profile (Japanese/Western mix with revised author-year formatting)
+\ProvidesFile{Mybiblatex4.sty}[2025/10/02 Authoryear mixed-language BibLaTeX profile v4]
 
 \RequirePackage{etoolbox}
 
@@ -137,9 +137,6 @@
         \namepartfamily%
       }%
     }{% 
-      \ifnumequal{\value{listcount}}{1}{}{%
-        \addcomma\space%
-      }%
       \ifblank{\namepartfamily}{%
         \ifblank{\namepartgiven}{}{\namepartgiven}%
       }{% 
@@ -162,7 +159,7 @@
       }{% 
         \ifnumequal{\value{listcount}}{\value{liststop}}{\addcomma\space and\space}{\addcomma\space}%
         \ifblank{\namepartgiven}{%
-          \ifblank{\namepartfamily}{}{\namepartfamily}%
+          \ifblank{\namepartfamily}{} {\namepartfamily}%
         }{% 
           \namepartgiven%
           \ifblank{\namepartfamily}{}{\space\namepartfamily}%
@@ -170,7 +167,7 @@
       }%
     }{% 
       \IfBibEntryTransJapanese{% 
-        \ifnumequal{\value{listcount}}{1}{}{\BibJapaneseNameSeparator}%
+        \ifnumequal{\value{listcount}}{1}{} {\BibJapaneseNameSeparator}%
         \ifblank{\namepartfamily}{%
           \ifblank{\namepartgiven}{}{\namepartgiven}%
         }{% 
@@ -178,7 +175,7 @@
         }%
       }{% 
         \IfBibEntryTransJapaneseSurnameFirst{% 
-          \ifnumequal{\value{listcount}}{1}{}{\BibJapaneseNameSeparator}%
+          \ifnumequal{\value{listcount}}{1}{} {\BibJapaneseNameSeparator}%
           \ifblank{\namepartfamily}{%
             \ifblank{\namepartgiven}{}{\namepartgiven}%
           }{% 
@@ -213,14 +210,14 @@
       }{% 
         \ifnumequal{\value{listcount}}{\value{liststop}}{\addcomma\space and\space}{\addcomma\space}%
         \ifblank{\namepartgiven}{%
-          \ifblank{\namepartfamily}{}{\namepartfamily}%
+          \ifblank{\namepartfamily}{} {\namepartfamily}%
         }{% 
           \namepartgiven%
           \ifblank{\namepartfamily}{}{\space\namepartfamily}%
         }%
       }%
     }{% 
-      \ifnumequal{\value{listcount}}{1}{}{\BibJapaneseNameSeparator}%
+      \ifnumequal{\value{listcount}}{1}{} {\BibJapaneseNameSeparator}%
       \ifblank{\namepartfamily}{%
         \ifblank{\namepartgiven}{}{\namepartgiven}%
       }{% 
@@ -230,13 +227,13 @@
     }%
     \usebibmacro{name:andothers}%
     \ifboolexpr{test {\ifnumequal{\value{listcount}}{\value{liststop}}}}{% 
-      \IfBibEntryWestern{}{訳}%
-    }{}%
+      \IfBibEntryWestern{}{訳}}%
+    {}%
   }
   \DeclareNameAlias{bytranslator}{translator}%
 
   \renewbibmacro*{bytranslator}{%
-    \ifnameundef{translator}{}{%
+    \ifnameundef{translator}{}{% 
       \IfBibEntryWestern{% 
         \printtext{trans\adddotspace by\space}\printnames[bytranslator]{translator}%
       }{% 
@@ -246,7 +243,7 @@
   }%
 
   \renewbibmacro*{bytranslator+others}{%
-    \ifnameundef{translator}{}{%
+    \ifnameundef{translator}{}{% 
       \IfBibEntryWestern{% 
         \printtext{trans\adddotspace by\space}\printnames[bytranslator]{translator}%
       }{% 
@@ -270,7 +267,7 @@
       \ifnameundef{editor}{%
         \global\undef\bbx@lasthash
         \usebibmacro{labeltitle}%
-      }{%
+      }{% 
         \usebibmacro{bbx:dashcheck}{\bibnamedash}{%
           \usebibmacro{bbx:savehash}%
           \printnames{editor}%
@@ -278,7 +275,7 @@
         \setunit{\addspace}%
         \usebibmacro{editor+othersstrg}%
       }%
-    }{%
+    }{% 
       \usebibmacro{bbx:dashcheck}{\bibnamedash}{%
         \usebibmacro{bbx:savehash}%
         \printnames{author}%
@@ -292,10 +289,11 @@
   \newif\ifBibGroupPrintedOther
   \newif\ifBibGroupPrintedAny
   \newif\ifBibMononymAuthor
+  \newif\ifBibSuppressYearPunct
 
   \newcommand*{\BibMarkSingleName}{%
     \ifnumequal{\value{listcount}}{1}{%
-      \ifmorenames{}{%
+      \ifmorenames{}{% 
         \ifdefvoid{\namepartfamily}{%
           \global\BibMononymAuthortrue
         }{% 
@@ -309,24 +307,32 @@
 
   \newcommand*{\BibAuthorYearDelimiter}{%
     \ifBibMononymAuthor
-      \PackageInfo{mybiblatex3}{BibAuthorYearDelimiter -> mononym case}%
+      \PackageInfo{Mybiblatex4}{BibAuthorYearDelimiter -> mononym case}%
     \else
-      \PackageInfo{mybiblatex3}{BibAuthorYearDelimiter -> default case}%
+      \PackageInfo{Mybiblatex4}{BibAuthorYearDelimiter -> default case}%
       \global\BibMononymAuthorfalse
     \fi
-    \setunit{\addperiod\space}%
+    \setunit{\addspace}%
+    \global\BibSuppressYearPuncttrue
     \newunit
   }
 
   \let\BibOriginalNewUnitPunct\newunitpunct
   \renewcommand*{\newunitpunct}{%
     \ifBibMononymAuthor
-      \PackageInfo{mybiblatex3}{newunitpunct -> mononym override}%
+      \PackageInfo{Mybiblatex4}{newunitpunct -> mononym override}%
       \global\BibMononymAuthorfalse
+      \global\BibSuppressYearPunctfalse
       \addperiod\space
     \else
-      \PackageInfo{mybiblatex3}{newunitpunct -> fallback}%
-      \BibOriginalNewUnitPunct
+      \ifBibSuppressYearPunct
+        \PackageInfo{Mybiblatex4}{newunitpunct -> year spacer}%
+        \global\BibSuppressYearPunctfalse
+        \addspace
+      \else
+        \PackageInfo{Mybiblatex4}{newunitpunct -> fallback}%
+        \BibOriginalNewUnitPunct
+      \fi
     \fi
   }
 
@@ -382,7 +388,13 @@
 
   \defbibheading{bibliography}{\section*{文献一覧}}
 
-  \newcommand*{\BibPrintYear}{\printlabeldateextra}
+  \renewcommand*{\BibPrintYear}{%
+    \printtext{%
+      \IfBibEntryWestern{(}{（}%
+      \printlabeldateextra
+      \IfBibEntryWestern{)}{）}%
+    }%
+  }
 
   \DeclareFieldFormat[book]{title}{\IfBibEntryWestern{\mkbibemph{#1}}{『#1』}}
   \DeclareFieldFormat[incollection]{title}{\IfBibEntryWestern{\mkbibquote{#1\isdot}}{「#1」}}
@@ -397,10 +409,10 @@
     \IfBibEntryWestern{\addcomma\space and\space}{、}%
   }
   \DeclareDelimFormat[cite]{multinamedelim}{%
-    \addcomma\space%
+    \IfBibEntryWestern{\addcomma\space}{、}%
   }
   \DeclareDelimFormat[cite]{finalnamedelim}{%
-    \addcomma\space%
+    \IfBibEntryWestern{\addcomma\space and\space}{、}%
   }
   \DeclareDelimFormat{nameyeardelim}{\addcomma\space}
   \DeclareDelimFormat[cite]{nameyeardelim}{\addcomma\space}
@@ -429,20 +441,20 @@
     \IfBibEntryWestern{% 
       \newunit\newblock
       \printfield{title}%
-      \ifnameundef{translator}{}{%
+      \ifnameundef{translator}{}{% 
         \newunit\newblock
         \usebibmacro{bytranslator}%
       }%
       \newunit\newblock
       \printlist{location}%
-      \iflistundef{location}{}{%
+      \iflistundef{location}{}{% 
         \setunit{\addcolon\space}%
       }%
       \printlist{publisher}%
     }{% 
       \newunit\newblock
       \printfield{title}%
-      \ifnameundef{translator}{}{%
+      \ifnameundef{translator}{}{% 
         \setunit{}%
         \usebibmacro{bytranslator}%
         \setunit{、}%
@@ -480,17 +492,17 @@
       \printfield{title}%
       \setunit{}%
       \printfield{journaltitle}%
-      \iffieldundef{volume}{}{%
+      \iffieldundef{volume}{}{% 
         \setunit{}%
         \printfield[noformat]{volume}\BibJapaneseVolumeSuffix%
       }%
-      \iffieldundef{number}{}{%
+      \iffieldundef{number}{}{% 
         \setunit{}%
         \printfield[noformat]{number}\BibJapaneseNumberSuffix%
       }%
       \setunit{、}%
       \printlist{publisher}%
-      \iffieldundef{pages}{}{%
+      \iffieldundef{pages}{}{% 
         \setunit{、}%
         \printfield[noformat]{pages}\BibJapanesePageSuffix%
       }%
@@ -511,7 +523,7 @@
       \newunit\newblock
       \printtext{In\space}%
       \printfield{booktitle}%
-      \ifnameundef{editor}{}{%
+      \ifnameundef{editor}{}{% 
         \setunit{\addcomma\space}%
         \printtext{\ifnumgreater{\value{editor}}{1}{eds.}{ed.}\space}%
         \printnames{editor}%
@@ -520,14 +532,14 @@
       \printfield{pages}%
       \newunit\newblock
       \printlist{location}%
-      \iflistundef{location}{}{%
+      \iflistundef{location}{}{% 
         \setunit{\addcolon\space}%
       }%
       \printlist{publisher}%
     }{% 
       \newunit\newblock
       \printfield{title}%
-      \ifnameundef{editor}{}{%
+      \ifnameundef{editor}{}{% 
         \setunit{}%
         \printnames{editor}編%
       }%
@@ -536,7 +548,7 @@
       \printtext{所収}%
       \setunit{、}%
       \printlist{publisher}%
-      \iffieldundef{pages}{}{%
+      \iffieldundef{pages}{}{% 
         \setunit{、}%
         \printfield[noformat]{pages}\BibJapanesePageSuffix%
       }%
@@ -558,7 +570,7 @@
   \begingroup
     \scalebox{\BibDashStretchFactor}[1]{\textemdash}%
   \endgroup
-  \nobreak\hbox{.\space}%
+  \nobreak
 }
 \AtBeginDocument{% 
   \renewcommand*{\bibnamedash}{\BibAuthorDash}%
