@@ -1,41 +1,68 @@
 # Translator Macro Demo
 
-欧米語文献に `trans. by` を表示し、日本語文献では訳者名の末尾に「訳」を追加する `biblatex` カスタマイズの最小実装です。`Themes/mymacro.sty` をプロジェクトに取り込み、LuaLaTeX + Biber でビルドすると、言語に応じた訳者ブロックの出し分けを確認できます。本リポジトリには LuaLaTeX のワークフローを前提にした `.latexmkrc` も同梱しており、同じ設定を手元環境にコピーするだけで再現できます。
+`Themes/` ディレクトリに最新の `mymacro.sty` と 3 種類の BibLaTeX プロファイル (`mybiblatex1/2/3.sty`) を格納し、言語別の訳者表示・参考文献グルーピングを再現するための最小構成プロジェクトです。LuaLaTeX + Biber を想定しており、`.latexmkrc` をそのまま流用すればワンコマンドでビルドできます。
 
-## 構成
+## 主なポイント
 
-- `main.tex` — デモ本文。`Themes/mymacro.sty` を読み込み、サンプル引用を表示します。
-- `Themes/mymacro.sty` — 既存環境から切り出したカスタムスタイル一式。訳者判定やレイアウト調整を含みます。
-- `bib/references.bib` — 欧米語と日本語の文献を含むテスト用 BibTeX データ。
-- `.latexmkrc` — LuaLaTeX + Biber を標準にした `latexmk` 設定。`.dat` ファイルのハッシュを無視して再実行ループを防ぎます。
+- `mymacro.sty`: LuaLaTeX 向けの共通マクロ。フォントフォールバック、`jlreq` の調整、穴埋め問題の Lua 自動採番などを提供します。
+- `mybiblatex1/2/3.sty`: 言語グループごとの出し分け・訳者表記を担う BibLaTeX プロファイル。用途に応じて読み替え可能です。
+- `bib/references.bib`: `langid` を使った新しいサンプルデータ。西洋文献、翻訳文献（2 パターン）、日本語文献を含み、グループ見出しと訳者書式の違いが掴めます。
 
-## ビルド手順
+## クイックスタート
 
-LuaLaTeX と Biber を使用し、以下のコマンドを実行します。
+1. 任意のプロジェクトへ `Themes/` と `bib/` ディレクトリをコピーし、`\input{Themes/mymacro.sty}` および必要な `mybiblatex*.sty` をプレアンブルに追加します。
+2. BibLaTeX のオプションは `\usepackage[backend=biber,style=authoryear]{biblatex}` が起点です。プロファイル側で `sorting=lnyt` などを自動指定します。
+3. 参考文献の `langid` を下表のルールで付与し、Biber を通してビルドします。
+
+PowerShell からのビルド例:
 
 ```powershell
 latexmk -lualatex -synctex=1 -interaction=nonstopmode -file-line-error main.tex
 ```
 
-ビルド後、`main.pdf` の参考文献で以下を確認できます。
+## BibLaTeX プロファイルの選び方
 
-- `nowak2018`（英語文献）: `trans. by` の接頭辞が表示され、訳者名が英字表記で整形される。
-- `kant2022`（日本語文献）: 訳者名の末尾に「訳」が付与され、欧文接頭辞は出力されない。
+- `mybiblatex1.sty` — 最小構成。脚注引用の姓のみ化、訳者接尾辞、LangID ベースのグルーピングを行います。
+- `mybiblatex2.sty` — 本文と参考文献の両方で混在表記を整形。`dashed=true`、モノニム著者向け区切り調整、視覚的なグループ見出しを含みます。
+- `mybiblatex3.sty` — `style=authoryear` をターゲットにした拡張版。`textcite` の括弧づけや `nameyeardelim` まで最適化しています。（デモではこちらを読み込んでいます。）
 
-## `.latexmkrc` 取り扱いガイド
+複数のプロファイルを試す場合は、`
+\input{Themes/mybiblatexX.sty}` 部分を差し替えるだけで挙動の違いを比較できます。
 
-1. プロジェクト直下の `.latexmkrc` を VS Code などで開き、必要に応じてコマンドパスやプレビューア設定を調整してください。
-2. 既存環境に同じ設定を適用する場合は、ユーザーディレクトリ（Windows なら `%USERPROFILE%`）へコピーするか、任意のプロジェクト直下に配置します。
-3. `latexmk` はカレントディレクトリを再帰的に探索して `.latexmkrc` を読み込みます。別ディレクトリからビルドする場合は `-r` オプションで設定ファイルを指定できます。
-4. `version.dat` のように毎回更新されるファイルは、既定でハッシュ比較から除外されるため、再コンパイルが無限ループするケースを防げます。詳細は補足資料を参照してください。
+## `langid` の割り当て指針
+
+| `langid` 値        | 用途 / 出力                      | 例示キー |
+|--------------------|----------------------------------|----------|
+| `English` など西洋 | 欧米語文献。`trans.~by` 付き訳者 | `nowak2018` |
+| `transJPN`         | 翻訳書（名→姓を中点で連結）      | `franklin2023` |
+| `transJPNfamily`   | 翻訳書（姓→名を維持、コンマ区切り）| `ishikawa2024` |
+| `Japanese`         | 日本語原著。訳者末尾に「訳」      | `kant2022` |
+
+追加で `usera` を指定すると、背後の `sorting=lnyt` が明示的ソートキーとして使用します。
+
+## サンプルデータで確認できること
+
+- `nowak2018`: 西洋文献の訳者に `trans.~by` が付与され、名前区切りが英語スタイルになります。
+- `franklin2023` / `ishikawa2024`: 翻訳文献グループが見出し「翻訳文献」として挿入され、訳者の名寄せが `langid` に応じて変化します。
+- `kant2022`: 日本語文献セクションが「日本語文献」として出力され、訳者名の末尾に「訳」が付与されます。
+
+## プロジェクト構成
+
+- `main.tex` — プロファイルの読み込み例と引用サンプル。
+- `Themes/` — `mymacro.sty` と 3 種類の BibLaTeX プロファイル。
+- `bib/references.bib` — 新しい `langid` 規約で整備したサンプルデータ。
+- `.latexmkrc` — LuaLaTeX + Biber ワークフローを前提にした設定ファイル。
+- `docs/latexmk_troubleshooting_report.md` — `.dat` ファイルで再コンパイルがループする際の調査ノート。
+
+## ビルドと運用のヒント
+
+1. `.latexmkrc` はプロジェクト直下に置いたままでも、ユーザーディレクトリにコピーして共通設定としても使用できます。
+2. `version.dat` など常時更新されるファイルは設定済みの無視リストによりハッシュ比較から除外され、無限ループを避けられます。
+3. Bib ファイルを更新したら `latexmk -c` で補助ファイルを一掃し、再コンパイルすると状態が揃います。
 
 ## 追加リソース
 
 - Qiita: [latexmk の設定や使い方まとめ](https://qiita.com/alpaca-honke/items/f30a2d04eedaa3c36a21)
-- リポジトリ内資料: `../docs/latexmk_troubleshooting_report.md` — `.dat` ファイルを巡る再実行ループの原因分析と対策を掲載。
+- リポジトリ内資料: `../docs/latexmk_troubleshooting_report.md`
 
-## 再利用メモ
-
-1. プロジェクトに `Themes/mymacro.sty` をコピーし、`\input{Themes/mymacro.sty}` を追加する。
-2. `biblatex` の `langid` フィールドに言語ラベル（`english`／`japanese` など）を設定する。
-3. LuaLaTeX + Biber でビルドし、PDF内の訳者表示を確認する。
+このリポジトリの `main.pdf` をビルドすれば、上記の挙動をそのまま確認できます。プロファイルを差し替えつつ、`langid` の運用ルールをチームに展開するサンプルとしてご活用ください。

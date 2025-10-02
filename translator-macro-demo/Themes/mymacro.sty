@@ -16,8 +16,8 @@
 \usepackage{multirow}
 \usepackage{capt-of}
 \usepackage{enumitem}
-% \usepackage{mVersion}
-\usepackage{ wasysym }
+\usepackage{mVersion}
+\usepackage{wasysym}
 \usepackage{needspace}
 \usepackage{marginnote}
 \usepackage{hyperref}
@@ -37,6 +37,8 @@
 }
 % 即時登録 (ユーザ側で個別制御したい場合はここをコメントアウトし，文書プリアンブルで明示的に呼ぶ)
 \RegisterUdDigiFallback
+
+
 
 % \textbullet を数式・本文の双方で安全に使用
 \AtBeginDocument{\renewcommand{\textbullet}{\ensuremath{\bullet}}}
@@ -88,7 +90,7 @@
 % バージョン管理スタイル
 \newcommand{\versionbox}[1]{%
   \begin{flushright}%
-    \textbf{\large{#1}}%
+    	extbf{\large{#1}}%
   \end{flushright}%
 }
 
@@ -266,19 +268,7 @@ end
 \newcommand{\―}{\scalebox{2}[1]{―}}
 \newcommand{\baikaku}[1]{\scalebox{2}[1]{#1}}
 
-% 参考文献著者ダッシュ調整（2025年9月29日）
-\newcommand*{\BibDashStretchFactor}{6.4}
-\newcommand*{\SetBibDashStretchFactor}[1]{\renewcommand*{\BibDashStretchFactor}{#1}}
-\DeclareRobustCommand{\BibAuthorDash}{%
-  \leavevmode
-  \begingroup
-    \nobreak\hskip\zw
-    \scalebox{\BibDashStretchFactor}[1]{\textemdash}%
-  \endgroup
-}
-\AtBeginDocument{% 
-  \renewcommand*{\bibnamedash}{\BibAuthorDash}%
-}
+
 
 % jlreqの設定（2025年6月24日）
 \jlreqsetup{quote_beforeafter_space=0.5\baselineskip}
@@ -324,158 +314,3 @@ end
 \def\toclevel@paragraph{4}
 \def\toclevel@subparagraph{5}
 }
-
-% ------------------------------------------------------------
-% biblatex カスタマイズ
-%  - 脚注引用 (\footcite 等) では姓のみを表示
-%  - 参考文献リストでは日本語文献を姓→名 (無コンマ)，欧文文献を「姓, 名」に整形
-%  - 判定は langid のみを使用（language フィールドは無視）
-% ------------------------------------------------------------
-\makeatletter
-\AtBeginDocument{% 
-  \@ifpackageloaded{biblatex}{%
-  % andothers/nameandothers を言語別に出し分け
-  \providecommand*{\mkbibandothers}{\bibstring{andothers}}
-  \providecommand*{\mkbibnameandothers}{\bibstring{nameandothers}}
-  \renewcommand*{\mkbibandothers}{\IfBibEntryWestern{\bibstring{andothers}}{ほか}}
-  \renewcommand*{\mkbibnameandothers}{\IfBibEntryWestern{\bibstring{andothers}}{ほか}}
-  \renewbibmacro*{name:andothers}{%
-    \ifboolexpr{%
-      test {\ifnumequal{\value{listcount}}{\value{liststop}}}%
-      and test \ifmorenames
-    }{\andothersdelim\mkbibnameandothers}{}
-  }%
-
-    % Western 言語かどうかを判定するヘルパー (langid のみ参照)
-    \newcommand*{\IfBibEntryWestern}[2]{%
-      \ifboolexpr{
-        test {\iffieldequalstr{langid}{english}}%
-        or test {\iffieldequalstr{langid}{English}}%
-        or test {\iffieldequalstr{langid}{English (英語)}}%
-        or test {\iffieldequalstr{langid}{american}}%
-        or test {\iffieldequalstr{langid}{American}}%
-        or test {\iffieldequalstr{langid}{british}}%
-        or test {\iffieldequalstr{langid}{British}}%
-        or test {\iffieldequalstr{langid}{australian}}%
-        or test {\iffieldequalstr{langid}{Australian}}%
-        or test {\iffieldequalstr{langid}{canadian}}%
-        or test {\iffieldequalstr{langid}{Canadian}}%
-        or test {\iffieldequalstr{langid}{german}}%
-        or test {\iffieldequalstr{langid}{German}}%
-        or test {\iffieldequalstr{langid}{German (ドイツ語)}}%
-        or test {\iffieldequalstr{langid}{french}}%
-        or test {\iffieldequalstr{langid}{French}}%
-        or test {\iffieldequalstr{langid}{italian}}%
-        or test {\iffieldequalstr{langid}{Italian}}%
-        or test {\iffieldequalstr{langid}{spanish}}%
-        or test {\iffieldequalstr{langid}{Spanish}}%
-      }{#1}{#2}%
-    }
-
-    % 脚注引用用: 姓のみを出力 (デフォルトで和文は「名,姓」の逆順を補正)
-    \DeclareNameFormat{familyonly}{%
-      \IfBibEntryWestern{% 
-        \ifblank{\namepartfamily}%
-          {\ifblank{\namepartgiven}{}{
-            \namepartgiven}}%
-          {\namepartfamily%
-           \ifblank{\namepartgiven}{}{}
-          }%
-      }{% 
-        \ifblank{\namepartfamily}%
-          {\ifblank{\namepartgiven}{}{
-            \namepartgiven}}%
-          {\namepartfamily%
-           \ifblank{\namepartgiven}{}{}
-          }%
-      }%
-      \usebibmacro{name:andothers}%
-    }
-
-    % 参考文献リスト: 和文=姓→名 (連結)，欧文=姓, 名
-    \DeclareNameFormat{author}{%
-      \IfBibEntryWestern{% 
-        \ifblank{\namepartfamily}%
-          {\ifblank{\namepartgiven}{}{
-            \namepartgiven}}%
-          {\namepartfamily%
-           \ifblank{\namepartgiven}{}{
-             \revsdnamepunct\namepartgiven}%
-          }%
-      }{% 
-        \ifblank{\namepartfamily}%
-          {\ifblank{\namepartgiven}{}{
-            \namepartgiven}}%
-          {\namepartfamily%
-           \ifblank{\namepartgiven}{}{
-             \unskip\namepartgiven}%
-          }%
-      }%
-      \usebibmacro{name:andothers}%
-    }
-
-    % 編集者・翻訳者も著者と同様に表示
-    \DeclareNameAlias{editor}{author}%
-    \DeclareNameFormat{translator}{%
-      \IfBibEntryWestern{% Western系言語: 著者と同じ「姓, 名」
-        \ifblank{\namepartfamily}%
-          {\ifblank{\namepartgiven}{}{
-            \namepartgiven}}%
-          {\namepartfamily%
-           \ifblank{\namepartgiven}{}{
-             \revsdnamepunct\namepartgiven}%
-          }%
-      }{% 非Western系: 姓名を連結
-        \ifblank{\namepartfamily}%
-          {\ifblank{\namepartgiven}{}{
-            \namepartgiven}}%
-          {\namepartfamily%
-           \ifblank{\namepartgiven}{}{
-             \unskip\namepartgiven}%
-          }%
-      }%
-      \usebibmacro{name:andothers}%
-      \ifboolexpr{% 最後に出力された訳者名か判定
-        test {\ifnumequal{\value{listcount}}{\value{liststop}}}%
-      }{% 日本語系のときのみ接尾辞を付与
-        \IfBibEntryWestern{}{訳}%
-      }{}%
-    }%
-  \DeclareNameAlias{bytranslator}{translator}%
-    % 言語別に訳者表記を切り替え（欧文= "trans. by", 和文=訳のみ）
-    \renewbibmacro*{bytranslator}{%
-      \ifnameundef{translator}%
-        {}%
-        {%
-          \IfBibEntryWestern
-            {\printtext{trans\adddotspace by\space}\printnames[bytranslator]{translator}}%
-            {\printnames[bytranslator]{translator}}%
-        }%
-    }%
-
-    \renewbibmacro*{bytranslator+others}{%
-      \ifnameundef{translator}%
-        {}%
-        {%
-          \IfBibEntryWestern
-            {\printtext{trans\adddotspace by\space}\printnames[bytranslator]{translator}}%
-            {\printnames[bytranslator]{translator}}%
-          \clearname{translator}%
-          \newunit
-        }%
-      \usebibmacro{withothers}%
-    }%
-
-    % 脚注等のラベル名フォーマットを姓のみへ
-    \DeclareNameAlias{labelname}{familyonly}
-    \DeclareNameAlias{label}{familyonly}
-    \DeclareNameAlias{shortauthor}{familyonly}
-    \DeclareNameAlias{shorteditor}{familyonly}
-    \DeclareNameAlias{shorttranslator}{familyonly}
-    \DeclareNameAlias{citeauthor}{familyonly}
-
-  % 姓名区切り: 欧文はコンマ+空白，日本語は削除
-  \DeclareDelimFormat[bib,biblist]{revsdnamepunct}{\IfBibEntryWestern{\addcomma\space}{}}
-  }{}
-}
-\makeatother

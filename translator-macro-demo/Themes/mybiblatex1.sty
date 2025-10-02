@@ -1,0 +1,323 @@
+% transJPN 設定用の中点
+\newcommand*{\TransJPNNameDelim}{・}
+
+
+% 参考文献著者ダッシュ調整（2025年9月29日）
+\newcommand*{\BibDashStretchFactor}{8.0}
+\newcommand*{\SetBibDashStretchFactor}[1]{\renewcommand*{\BibDashStretchFactor}{#1}}
+\DeclareRobustCommand{\BibAuthorDash}{%
+  \unskip
+  \nobreak\hskip0em\relax
+  \leavevmode
+  \begingroup
+    \scalebox{\BibDashStretchFactor}[1]{\textemdash}%
+  \endgroup
+  \nobreak\hbox{.}%
+}
+\AtBeginDocument{% 
+  \renewcommand*{\bibnamedash}{\BibAuthorDash}%
+}
+
+% ------------------------------------------------------------
+% biblatex カスタマイズ
+%  - 脚注引用 (\footcite 等) では姓のみを表示
+%  - 参考文献リストでは日本語文献を姓→名 (無コンマ)，欧文文献を「姓, 名」に整形
+%  - 判定は langid のみを使用（language フィールドは無視）
+% ------------------------------------------------------------
+\AddToHook{package/biblatex/after}{%
+  \DeclareSortingTemplate{lnyt}{%
+    \sort[direction=ascending]{\field{presort}}%
+    \sort[direction=ascending]{\field{sortkey}}%
+    \sort[direction=ascending]{\field{usera}}%
+    \sort[direction=ascending]{\field{sortname}}%
+    \sort[direction=ascending]{\field{author}}%
+    \sort[direction=ascending]{\field{editor}}%
+    \sort[direction=ascending]{\field{translator}}%
+    \sort[direction=ascending]{\field{sortyear}}%
+    \sort[direction=ascending]{\field{year}}%
+    \sort[direction=ascending]{\field{sorttitle}}%
+    \sort[direction=ascending]{\field{title}}%
+  }%
+  \ExecuteBibliographyOptions{sorting=lnyt}%
+  \providecommand*{\BibHangingIndent}{1.5\zw}%
+  \setlength{\bibhang}{\BibHangingIndent}%
+  % usera が設定されていて sortkey が未指定の場合は usera をソートキーへコピー
+  \DeclareSourcemap{% 
+    \maps[datatype=bibtex]{%
+      \map{% 
+        \step[fieldset=abstract, null]%
+        \step[fieldset=annotation, null]%
+        \step[fieldset=keywords, null]%
+        \step[fieldset=note, null]%
+        \step[fieldset=addendum, null]%
+        \step[fieldset=urldate, null]%
+      }%
+      \map{% 
+        \step[fieldsource=sortkey, match=\regexp{.+}, final]%
+        \step[fieldsource=usera, match=\regexp{.+}, fieldset=sortkey, origfieldval]%
+      }%
+      \map{% 
+        \step[fieldsource=presort, match=\regexp{.+}, final]%
+        \step[fieldsource=langid, match=\regexp{(?i)(english|american|british|australian|canadian|german|french|italian|spanish)}, fieldset=presort, fieldvalue={A}]%
+      }%
+      \map{% 
+        \step[fieldsource=presort, match=\regexp{.+}, final]%
+        \step[fieldsource=langid, match=transJPN, fieldset=presort, fieldvalue={B}]%
+      }%
+      \map{% 
+        \step[fieldsource=presort, match=\regexp{.+}, final]%
+        \step[fieldsource=langid, match=transJPNfamily, fieldset=presort, fieldvalue={B}]%
+      }%
+      \map{% 
+        \step[fieldsource=presort, match=\regexp{.+}, final]%
+        \step[fieldsource=langid, match=\regexp{(?i)japanese}, fieldset=presort, fieldvalue={C}]%
+      }%
+      \map{% 
+        \step[fieldsource=presort, match=\regexp{.+}, final]%
+        \step[fieldset=presort, fieldvalue={D}]%
+      }%
+    }%
+  }%
+}
+
+\makeatletter
+\AtBeginDocument{% 
+  \@ifpackageloaded{biblatex}{%
+  \AtEveryBibitem{%
+    \clearfield{abstract}%
+    \clearfield{annotation}%
+    \clearfield{note}%
+    \clearfield{addendum}%
+    \clearfield{urldate}%
+    \clearlist{keywords}%
+  }%
+  % andothers/nameandothers を言語別に出し分け
+  \providecommand*{\mkbibandothers}{\bibstring{andothers}}
+  \providecommand*{\mkbibnameandothers}{\bibstring{nameandothers}}
+  \renewcommand*{\mkbibandothers}{\IfBibEntryWestern{\bibstring{andothers}}{ほか}}
+  \renewcommand*{\mkbibnameandothers}{\IfBibEntryWestern{\bibstring{andothers}}{ほか}}
+  \renewbibmacro*{name:andothers}{%
+    \ifboolexpr{%
+      test {\ifnumequal{\value{listcount}}{\value{liststop}}}%
+      and test \ifmorenames
+    }{\andothersdelim\mkbibnameandothers}{}
+  }%
+
+    % Western 言語かどうかを判定するヘルパー (langid のみ参照)
+    \newcommand*{\IfBibEntryWestern}[2]{%
+      \ifboolexpr{
+        test {\iffieldequalstr{langid}{english}}%
+        or test {\iffieldequalstr{langid}{English}}%
+        or test {\iffieldequalstr{langid}{English (英語)}}%
+        or test {\iffieldequalstr{langid}{american}}%
+        or test {\iffieldequalstr{langid}{American}}%
+        or test {\iffieldequalstr{langid}{british}}%
+        or test {\iffieldequalstr{langid}{British}}%
+        or test {\iffieldequalstr{langid}{australian}}%
+        or test {\iffieldequalstr{langid}{Australian}}%
+        or test {\iffieldequalstr{langid}{canadian}}%
+        or test {\iffieldequalstr{langid}{Canadian}}%
+        or test {\iffieldequalstr{langid}{german}}%
+        or test {\iffieldequalstr{langid}{German}}%
+        or test {\iffieldequalstr{langid}{German (ドイツ語)}}%
+        or test {\iffieldequalstr{langid}{french}}%
+        or test {\iffieldequalstr{langid}{French}}%
+        or test {\iffieldequalstr{langid}{italian}}%
+        or test {\iffieldequalstr{langid}{Italian}}%
+        or test {\iffieldequalstr{langid}{spanish}}%
+        or test {\iffieldequalstr{langid}{Spanish}}%
+      }{#1}{#2}%
+    }
+
+    % transJPN（翻訳書用日本語エントリ）かどうかを判定
+    \newcommand*{\IfBibEntryTransJapanese}[2]{%
+      \ifboolexpr{
+        test {\iffieldequalstr{langid}{transJPN}}%
+      }{#1}{#2}%
+    }
+
+    % transJPNfamily（翻訳書・姓先行表示）かどうかを判定
+    \newcommand*{\IfBibEntryTransJapaneseSurnameFirst}[2]{%
+      \ifboolexpr{
+        test {\iffieldequalstr{langid}{transJPNfamily}}%
+      }{#1}{#2}%
+    }
+
+    % langid=Japanese 系かどうかを判定
+    \newcommand*{\IfBibEntryJapanese}[2]{%
+      \ifboolexpr{
+        test {\iffieldequalstr{langid}{Japanese}}%
+        or test {\iffieldequalstr{langid}{japanese}}%
+      }{#1}{#2}%
+    }
+
+    % 脚注引用用: 姓のみを出力 (デフォルトで和文は「名,姓」の逆順を補正)
+    \DeclareNameFormat{familyonly}{%
+      \IfBibEntryWestern{% 
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{\namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{}
+          }%
+      }{% 
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{\namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{}
+          }%
+      }%
+      \usebibmacro{name:andothers}%
+    }
+
+    % 参考文献リスト: 和文=姓→名 (連結)，欧文=姓, 名
+    \DeclareNameFormat{author}{%
+      \IfBibEntryWestern{% 
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{\namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{\revsdnamepunct\namepartgiven}%
+          }%
+      }{% 
+        \IfBibEntryTransJapanese{% 
+          \ifblank{\namepartfamily}%
+            {\ifblank{\namepartgiven}{}{\namepartgiven}}%
+            {\ifblank{\namepartgiven}{\namepartfamily}{\namepartgiven\TransJPNNameDelim\namepartfamily}}%
+        }{% 
+          \IfBibEntryTransJapaneseSurnameFirst{% 
+            \ifblank{\namepartfamily}%
+              {\ifblank{\namepartgiven}{}{\namepartgiven}}%
+              {\namepartfamily%
+               \ifblank{\namepartgiven}{}{\addcomma\space\namepartgiven}%
+              }%
+          }{% 
+            \IfBibEntryJapanese{\ifnumequal{\value{listcount}}{1}{\hspace{-1pt}}{}}{}%
+            \ifblank{\namepartfamily}%
+              {\ifblank{\namepartgiven}{}{\namepartgiven}}%
+              {\namepartfamily%
+               \ifblank{\namepartgiven}{}{\unskip\namepartgiven}%
+              }%
+          }%
+        }%
+      }%
+      \usebibmacro{name:andothers}%
+    }
+
+    % 編集者・翻訳者も著者と同様に表示
+    \DeclareNameAlias{editor}{author}%
+    \DeclareNameFormat{translator}{%
+      \IfBibEntryWestern{% Western系言語: 著者と同じ「姓, 名」
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{\namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{\revsdnamepunct\namepartgiven}%
+          }%
+      }{% 非Western系: 姓名を連結
+        \ifblank{\namepartfamily}%
+          {\ifblank{\namepartgiven}{}{\namepartgiven}}%
+          {\namepartfamily%
+           \ifblank{\namepartgiven}{}{\unskip\namepartgiven}%
+          }%
+      }%
+      \usebibmacro{name:andothers}%
+      \ifboolexpr{% 最後に出力された訳者名か判定
+        test {\ifnumequal{\value{listcount}}{\value{liststop}}}%
+      }{% 日本語系のときのみ接尾辞を付与
+        \IfBibEntryWestern{}{訳}%
+      }{}%
+    }%
+  \DeclareNameAlias{bytranslator}{translator}%
+    % 言語別に訳者表記を切り替え（欧文= "trans. by", 和文=訳のみ）
+    \renewbibmacro*{bytranslator}{%
+      \ifnameundef{translator}%
+        {}%
+        {%
+          \IfBibEntryWestern
+            {\printtext{trans\adddotspace by\space}\printnames[bytranslator]{translator}}%
+            {\printnames[bytranslator]{translator}}%
+        }%
+    }%
+
+    \renewbibmacro*{bytranslator+others}{%
+      \ifnameundef{translator}%
+        {}%
+        {%
+          \IfBibEntryWestern
+            {\printtext{trans\adddotspace by\space}\printnames[bytranslator]{translator}}%
+            {\printnames[bytranslator]{translator}}%
+          \clearname{translator}%
+          \newunit
+        }%
+      \usebibmacro{withothers}%
+    }%
+
+    % 脚注等のラベル名フォーマットを姓のみへ
+    \DeclareNameAlias{labelname}{familyonly}
+    \DeclareNameAlias{label}{familyonly}
+    \DeclareNameAlias{shortauthor}{familyonly}
+    \DeclareNameAlias{shorteditor}{familyonly}
+    \DeclareNameAlias{shorttranslator}{familyonly}
+    \DeclareNameAlias{citeauthor}{familyonly}
+
+  %------------------------------
+  % Bibliography grouping by presort (A: Western, B: Translations, C: Japanese, D: Others)
+  \newif\ifBibGroupPrintedWestern
+  \newif\ifBibGroupPrintedTranslated
+  \newif\ifBibGroupPrintedJapanese
+  \newif\ifBibGroupPrintedOther
+  \newif\ifBibGroupPrintedAny
+
+  \providecommand*{\BibGroupHeadingWestern}{欧米文献}
+  \providecommand*{\BibGroupHeadingTranslated}{翻訳文献}
+  \providecommand*{\BibGroupHeadingJapanese}{日本語文献}
+  \providecommand*{\BibGroupHeadingOther}{その他}
+
+  \newcommand*{\PrintBibGroupHeading}[1]{%
+    \ifBibGroupPrintedAny\par\addvspace{1.2\baselineskip}\fi
+    {\large\bfseries #1}\par\nobreak\addvspace{0.6\baselineskip}%
+    \global\BibGroupPrintedAnytrue
+  }
+
+  \newcommand*{\MaybePrintBibGroupHeading}{%
+    \iffieldundef{presort}{}{% 
+      \ifboolexpr{test {\iffieldequalstr{presort}{A}}}{%
+        \ifBibGroupPrintedWestern\else
+          \PrintBibGroupHeading{\BibGroupHeadingWestern}%
+          \global\BibGroupPrintedWesterntrue
+        \fi
+      }{}
+      \ifboolexpr{test {\iffieldequalstr{presort}{B}}}{%
+        \ifBibGroupPrintedTranslated\else
+          \PrintBibGroupHeading{\BibGroupHeadingTranslated}%
+          \global\BibGroupPrintedTranslatedtrue
+        \fi
+      }{}
+      \ifboolexpr{test {\iffieldequalstr{presort}{C}}}{%
+        \ifBibGroupPrintedJapanese\else
+          \PrintBibGroupHeading{\BibGroupHeadingJapanese}%
+          \global\BibGroupPrintedJapanesetrue
+        \fi
+      }{}
+      \ifboolexpr{test {\iffieldequalstr{presort}{D}}}{%
+        \ifBibGroupPrintedOther\else
+          \PrintBibGroupHeading{\BibGroupHeadingOther}%
+          \global\BibGroupPrintedOthertrue
+        \fi
+      }{}
+    }%
+  }
+
+  \AtBeginBibliography{%
+    \global\BibGroupPrintedWesternfalse
+    \global\BibGroupPrintedTranslatedfalse
+    \global\BibGroupPrintedJapanesefalse
+    \global\BibGroupPrintedOtherfalse
+    \global\BibGroupPrintedAnyfalse
+  }
+
+  \pretocmd{\bibitem}{\MaybePrintBibGroupHeading}{}{}
+
+  % 姓名区切り: 欧文はコンマ+空白，日本語は削除
+  \DeclareDelimFormat[bib,biblist]{revsdnamepunct}{\IfBibEntryWestern{\addcomma\space}{}}
+  }{}
+}
+\makeatother
